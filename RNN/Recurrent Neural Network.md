@@ -89,12 +89,15 @@ $$
 
 梯度爆炸的解决办法：
 
-1.  Truncated Backpropagation through time：每次只 BP 固定的 time step 数，类似于 mini-batch SGD。
+(1)  Truncated Backpropagation through time：每次只 BP 固定的 time step 数，类似于 mini-batch SGD。缺点是丧失了长距离记忆的能力。
 
+![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/3.png)
 
-
-
-
+(2)  Clipping Gradients： 当梯度超过一定的 threshold 后，就进行 element-wise 的裁剪，该方法的缺点是又引入了一个新的参数 threshold：
+$$
+\text{if} \quad \lVert \textbf{g} \rVert \ge \text{threshold} \\[1ex]
+\textbf{g} \leftarrow \frac{\text{threshold}}{\lVert \textbf{g} \rVert} \textbf{g}
+$$
 
 
 

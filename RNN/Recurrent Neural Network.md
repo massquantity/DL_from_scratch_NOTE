@@ -50,29 +50,46 @@ $$
 
 
 
+
+
 #### Vanishing & Exploding Gradient Problems
 
+RNN 中 Loss 的计算图示例：
+
+![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/2.png)
 
 
 
+总的 Loss 是每个时间结点的加和 ： $\mathcal{\large{L}} (\hat{\textbf{y}}, \textbf{y}) = \sum_{t = 1}^{T} \mathcal{ \large{L} }(\hat{\textbf{y}_t}, \textbf{y}_{t})$
+
+**backpropagation through time (BPTT)** 算法：
+$$
+\frac{\partial \textbf{E}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \textbf{E}_{t}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \textbf{E}_t}{\partial \textbf{y}_{t}} \frac{\partial \textbf{y}_{t}}{\partial \textbf{h}_{t}} \overbrace{\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}}^{ \bigstar } \frac{\partial \textbf{h}_{k}}{\partial \textbf{W}}
+$$
+其中 $\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}$ 包含一系列 $\text{Jacobian}$ 矩阵，
+$$
+\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}} = \frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}} \frac{\partial \textbf{h}_{t-1}}{\partial \textbf{h}_{t-2}} \cdots \frac{\partial \textbf{h}_{k+1}}{\partial \textbf{h}_{k}} 
+= \prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}}
+$$
+由于 RNN 中每个 time step 都是用相同的 $\textbf{W}$ ，所以由 $(2a)$ 式可得：
+$$
+\prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} = \prod_{i=k+1}^{t} \textbf{W}^\top \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right]
+$$
 
 
+由于 $\textbf{W}_{hh} \in \mathbb{R}^{h \times h}$ 为方阵，对其进行特征值分解：
+$$
+\mathbf{W} = \mathbf{V} \, \text{diag}(\boldsymbol{\lambda}) \, \mathbf{V}^{-1}
+$$
+由于上式是连乘 $\text{t}$ 次 $\mathbf{W}$ :
+$$
+\mathbf{W}^t = (\mathbf{V} \, \text{diag}(\boldsymbol{\lambda}) \, \mathbf{V}^{-1})^t = \mathbf{V} \, \text{diag}(\boldsymbol{\lambda})^t \, \mathbf{V}^{-1}
+$$
+连乘的次数多了之后，则若最大的特征值 $\lambda >1$ ，会产生梯度爆炸； $\lambda < 1$ ，则会产生梯度消失 。
 
+梯度爆炸的解决办法：
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+1.  Truncated Backpropagation through time：每次只 BP 固定的 time step 数，类似于 mini-batch SGD。
 
 
 

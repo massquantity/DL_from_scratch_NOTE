@@ -62,6 +62,8 @@ RNN 中 Loss 的计算图示例：
 
 总的 Loss 是每个时间结点的加和 ： $\mathcal{\large{L}} (\hat{\textbf{y}}, \textbf{y}) = \sum_{t = 1}^{T} \mathcal{ \large{L} }(\hat{\textbf{y}_t}, \textbf{y}_{t})$
 
+
+
 **backpropagation through time (BPTT)** 算法：
 $$
 \frac{\partial \textbf{E}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \textbf{E}_{t}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \textbf{E}_t}{\partial \textbf{y}_{t}} \frac{\partial \textbf{y}_{t}}{\partial \textbf{h}_{t}} \overbrace{\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}}^{ \bigstar } \frac{\partial \textbf{h}_{k}}{\partial \textbf{W}}
@@ -87,7 +89,9 @@ $$
 $$
 连乘的次数多了之后，则若最大的特征值 $\lambda >1$ ，会产生梯度爆炸； $\lambda < 1$ ，则会产生梯度消失 。
 
-梯度爆炸的解决办法：
+
+
+#### 梯度爆炸的解决办法：
 
 (1)  Truncated Backpropagation through time：每次只 BP 固定的 time step 数，类似于 mini-batch SGD。缺点是丧失了长距离记忆的能力。
 
@@ -98,13 +102,26 @@ $$
 \text{if} \quad \lVert \textbf{g} \rVert \ge \text{threshold} \\[1ex]
 \textbf{g} \leftarrow \frac{\text{threshold}}{\lVert \textbf{g} \rVert} \textbf{g}
 $$
+![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/4.png)
 
 
 
+#### 梯度消失的解决办法
 
+(1)  使用 LSTM、GRU等升级版 RNN，使用各种 gates 控制信息的流通。
 
-
-
+(2)  [将权重矩阵 $\textbf{W}$ 初始化为正交矩阵](https://arxiv.org/pdf/1602.06662.pdf)。正交矩阵有如下性质：$A^T A =A A^T =  I, \; A^T = A^{-1}$， 正交矩阵的特征值的绝对值为 $\text{1}$ 。证明：  对矩阵 $A$ 有，
+$$
+\begin{align*}
+& A \mathbf{v} = \lambda \mathbf{v} \\[1ex]
+ ||A \mathbf{v}||^2& = (A \mathbf{v})^\text{T} (A \mathbf{v}) \\
+&= \mathbf{v}^\text{T}A ^{\text{T}}A \mathbf{v} \\
+& = \mathbf{v}^{\text{T}}\mathbf{v} \\ &
+= ||\mathbf{v}||^2 \\ &
+= |\lambda|^2 ||\mathbf{v}||^2
+\end{align*}
+$$
+由于 $\mathbf{v}$ 为特征向量，$\mathbf{v} \neq 0$ ，所以 $|\lambda| = 1$ ，这样连乘之后 $\lambda^t$ 不会出现越来越小的情况。
 
 
 

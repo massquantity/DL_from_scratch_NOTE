@@ -8,7 +8,7 @@
 
 
 
-上图中 $\bf{X, h, y}$ 都是向量，话不多说，直接上公式：
+上图中 $\bf{X, h, y}$ 都是向量，公式如下：
 $$
 % <![CDATA[
 \begin{align}
@@ -97,7 +97,7 @@ $$
 
 ![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/3.png)
 
-(2)  Clipping Gradients： 当梯度超过一定的 threshold 后，就进行 element-wise 的裁剪，该方法的缺点是又引入了一个新的参数 threshold：
+(2)  Clipping Gradients： 当梯度超过一定的 threshold 后，就进行 element-wise 的裁剪，该方法的缺点是又引入了一个新的参数 threshold。该方法可被视为一种基于瞬时梯度大小来自适应 learning rate 的方法：
 $$
 \text{if} \quad \lVert \textbf{g} \rVert \ge \text{threshold} \\[1ex]
 \textbf{g} \leftarrow \frac{\text{threshold}}{\lVert \textbf{g} \rVert} \textbf{g}
@@ -127,7 +127,17 @@ $$
 
 
 
+### LSTM
 
+> 1、原始的 LSTM 是没有 forget gate 的，或者说相当于 forget gate 恒为 1，所有不存在梯度消失问题；
+>
+> 2、现在的 LSTM 被引入了 forget gate，但是 LSTM 的一个初始化技巧就是将 forget gate 的 bias 置为正数（例如 1 或者 5，这点可以查看各大框架源码），这样一来模型刚开始训练时 forget gate 的值都接近 1，不会发生梯度消失；
+>
+> 3、随着训练过程的进行，forget gate 就不再恒为 1 了。不过，一个训好的模型里各个 gate 值往往不是在 [0, 1] 这个区间里，而是要么 0 要么 1，很少有类似 0.5 这样的中间值，其实相当于一个二元的开关。假如在某个序列里，forget gate 全是 1，那么梯度不会消失；否则，若某一个 forget gate 是 0，这时候虽然会导致梯度消失，但这是 feature 不是 bug，体现了模型的选择性（有些任务里是需要选择性的，比如情感分析里”这部电影很好看，但是票价有点儿贵“，读到”但是“的时候就应该忘掉前半句的内容，模型不想让梯度流回去）；
+>
+> 4、基于第 3 点，我不喜欢从梯度消失/爆炸的角度来谈论 LSTM/GRU 等现代门控 RNN 单元，更喜欢从选择性的角度来解释，模型选择记住（或遗忘）它想要记住（或遗忘）的部分，从而更有效地利用其隐层单元。
+>
+> https://www.zhihu.com/question/34878706
 
 
 

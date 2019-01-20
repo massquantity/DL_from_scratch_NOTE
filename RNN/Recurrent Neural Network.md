@@ -141,17 +141,62 @@ $$
 
 
 
-虽然 Vanilla RNN 理论上可以建立长时间间隔的状态之间的依赖关系，但由于梯度爆炸或消失问题，实际上只能学到短期依赖关系。为了学到长期依赖关系，LSTM 中引入了门控机制来控制信息的累计速度，包括有选择地加入新的信息，并有选择地遗忘之前累计的信息。
+虽然 Vanilla RNN 理论上可以建立长时间间隔的状态之间的依赖关系，但由于梯度爆炸或消失问题，实际上只能学到短期依赖关系。为了学到长期依赖关系，LSTM 中引入了门控机制来控制信息的累计速度，包括有选择地加入新的信息，并有选择地遗忘之前累计的信息，整个 LSTM 单元结构如下图所示：
+
+![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/5.png)
 
 
 
+$$
+\begin{align}
+\text{input gate}&: \quad  \textbf{i}_t = \sigma(\textbf{W}_i\textbf{x}_t + \textbf{U}_i\textbf{h}_{t-1} + \textbf{b}_i)\tag{1} \\
+\text{forget gate}&: \quad  \textbf{f}_t = \sigma(\textbf{W}_f\textbf{x}_t + \textbf{U}_f\textbf{h}_{t-1} + \textbf{b}_f) \tag{2}\\
+\text{output gate}&: \quad  \textbf{o}_t = \sigma(\textbf{W}_o\textbf{x}_t + \textbf{U}_o\textbf{h}_{t-1} + \textbf{b}_o) \tag{3}\\
+\text{new memory cell}&: \quad  \tilde{\textbf{c}}_t = \text{tanh}(\textbf{W}_c\textbf{x}_t + \textbf{U}_c\textbf{h}_{t-1} + \textbf{b}_c) \tag{4}\\
+\text{final memory cell}& : \quad \textbf{c}_t =   \textbf{f}_t \odot \textbf{c}_{t-1} + \textbf{i}_t \odot \tilde{\textbf{c}}_t \tag{5}\\
+\text{final hidden state} &: \quad \textbf{h}_t= \textbf{o}_t \odot \text{tanh}(\textbf{c}_t) \tag{6}
+\end{align}
+$$
+公式 $(1) \sim (4) $ 的输入都一样，因而可以合并：
+$$
+\begin{pmatrix}
+\textbf{i}_t \\
+\textbf{f}_{t} \\
+\textbf{o}_t \\
+\tilde{\textbf{c}}_t
+\end{pmatrix}
+ = 
+ \begin{pmatrix}
+\sigma \\
+\sigma \\
+\sigma \\
+\text{tanh}
+\end{pmatrix} 
+
+\left(\textbf{W} 
+\begin{bmatrix}
+\textbf{x}_t \\
+\textbf{h}_{t-1}
+\end{bmatrix} + \textbf{b}
+\right)
+$$
+$\tilde{\textbf{c}}_t $ 为时刻 t 的候选状态，$\textbf{i}_t$ 控制 $\tilde{\textbf{c}}_t$  中有多少信息需要保存，$\textbf{f}_{t}$ 控制上一时刻的内部状态 $\textbf{c}_{t-1}$ 需要遗忘多少信息，$\textbf{o}_t$ 控制当前时刻的内部状态 $\textbf{c}_t$ 有多少信息需要输出给外部状态 $\textbf{h}_t$ 。
+
+对比 Vanilla RNN，可以发现在时刻 t，Vanilla RNN 通过 $\textbf{h}_t$ 来保存和传递信息，上文已分析了如果时间间隔较大容易产生梯度消失的问题。 LSTM 则通过记忆单元 $\textbf{c}_t$ 来传递信息，通过 $\textbf{i}_t$ 和 $\textbf{f}_{t}$ 的调控，$\textbf{c}_t$ 可以在 t 时刻捕捉到某个关键信息，并有能力将此关键信息保存一定的时间间隔。
+
+原始的 LSTM 中是没有 forget gate 的，即：
+$$
+\textbf{c}_t =   \textbf{c}_{t-1} + \textbf{i}_t \odot \tilde{\textbf{c}}_t
+$$
+这样 $\frac{\partial \textbf{c}_t}{\partial \textbf{c}_{t-1}}$ 恒为 $\text{1}$ 。但是这样 $\textbf{c}_t$ 会不断增大，容易饱和从而降低模型性能。后来引入了 forget gate ，则梯度变为 $\textbf{f}_{t}$ ，事实上连乘多个 $\textbf{f}_{t} \in (0,1)$ 同样会导致梯度消失，但是 LSTM 的一个初始化技巧就是将 forget gate 的 bias 置为正数（例如 1 或者 5，这点可以查看各大框架源码），这样一来模型刚开始训练时 forget gate 的值都接近 1，不会发生梯度消失 (反之若 forget gate 的初始值过小则意味着前一时刻的大部分信息都丢失了，这样很难捕捉到长距离依赖关系)。 随着训练过程的进行，forget gate 就不再恒为 1 了。不过，一个训好的模型里各个 gate 值往往不是在 [0, 1] 这个区间里，而是要么 0 要么 1，很少有类似 0.5 这样的中间值，其实相当于一个二元的开关。假如在某个序列里，forget gate 全是 1，那么梯度不会消失；某一个 forget gate 是 0，模型选择遗忘上一时刻的信息。
 
 
 
-
-
-
-
-
-
-
+==peephole链接 (图，李宏毅，邱)==
+$$
+\begin{align*}
+\text{input gate}&: \quad  \textbf{i}_t = \sigma(\textbf{W}_i\textbf{x}_t + \textbf{U}_i\textbf{h}_{t-1} + \textbf{V}_i\textbf{c}_{t-1} + \textbf{b}_i) \\
+\text{forget gate}&: \quad  \textbf{f}_t = \sigma(\textbf{W}_f\textbf{x}_t + \textbf{U}_f\textbf{h}_{t-1} + \textbf{V}_f\textbf{c}_{t-1} +\textbf{b}_f) \\
+\text{output gate}&: \quad  \textbf{o}_t = \sigma(\textbf{W}_o\textbf{x}_t + \textbf{U}_o\textbf{h}_{t-1} + \textbf{V}_o\textbf{c}_{t-1} +\textbf{b}_o) \\
+\end{align*}
+$$

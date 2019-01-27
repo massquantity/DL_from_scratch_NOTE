@@ -192,7 +192,7 @@ $$
 
 
 
-==peephole链接 (图，李宏毅，邱)==
+LSTM 的一种变体增加 peephole 连接，这样三个 gate 不仅依赖于 $\textbf{x}_t$ 和 $\textbf{h}_{t-1}$，也依赖于记忆单元 $\textbf{c}$ ：
 $$
 \begin{align*}
 \text{input gate}&: \quad  \textbf{i}_t = \sigma(\textbf{W}_i\textbf{x}_t + \textbf{U}_i\textbf{h}_{t-1} + \textbf{V}_i\textbf{c}_{t-1} + \textbf{b}_i) \\
@@ -200,3 +200,85 @@ $$
 \text{output gate}&: \quad  \textbf{o}_t = \sigma(\textbf{W}_o\textbf{x}_t + \textbf{U}_o\textbf{h}_{t-1} + \textbf{V}_o\textbf{c}_{t} +\textbf{b}_o) \\
 \end{align*}
 $$
+
+注意 input gate 和 forget gate 连接的是 $\textbf{c}_{t-1}$ ，而 output gate 连接的是 $\textbf{c}_t$ 。
+
+![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/6.png)
+
+
+
+
+
+### GRU
+
+相比于 Vanilla RNN (有两个输入，$\textbf{x}_t$ 和 $\textbf{h}_{t-1}$)，从上面的 $(1) \sim (4)$ 式可以看出 一个LSTM 单元有八个输入 (如下图，不考虑 peephole) ，因而参数是 Vanilla RNN 的四倍，带来的结果是训练起来很慢，因而在2014年 Cho 等人提出了 [GRU](https://arxiv.org/pdf/1409.1259.pdf) ，对 LSTM 进行了简化。
+
+![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/7.png)
+
+
+$$
+\large\text{LSTM} ：
+\normalsize
+\begin{align}
+\text{input gate}&: \quad  \textbf{i}_t = \sigma(\textbf{W}_i\textbf{x}_t + \textbf{U}_i\textbf{h}_{t-1} + \textbf{b}_i)\tag{1} \\
+\text{forget gate}&: \quad  \textbf{f}_t = \sigma(\textbf{W}_f\textbf{x}_t + \textbf{U}_f\textbf{h}_{t-1} + \textbf{b}_f) \tag{2}\\
+\text{output gate}&: \quad  \textbf{o}_t = \sigma(\textbf{W}_o\textbf{x}_t + \textbf{U}_o\textbf{h}_{t-1} + \textbf{b}_o) \tag{3}\\
+\text{new memory cell}&: \quad  \tilde{\textbf{c}}_t = \text{tanh}(\textbf{W}_c\textbf{x}_t + \textbf{U}_c\textbf{h}_{t-1} + \textbf{b}_c) \tag{4}\\
+\text{final memory cell}& : \quad \textbf{c}_t =   \textbf{f}_t \odot \textbf{c}_{t-1} + \textbf{i}_t \odot \tilde{\textbf{c}}_t \tag{5}\\
+\text{final hidden state} &: \quad \textbf{h}_t= \textbf{o}_t \odot \text{tanh}(\textbf{c}_t) \tag{6}
+\end{align}
+$$
+在式 $(5)$ 中 forget gate 和 input gate 是互补关系，因而比较冗余，GRU 将其合并为一个 update gate。同时 GRU 也不引入额外的记忆单元 (LSTM 中的 $\textbf{c}$) ，而是直接在当前状态 $\textbf{h}_t$ 和历史状态 $\textbf{h}_{t-1}$ 之间建立线性依赖关系。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

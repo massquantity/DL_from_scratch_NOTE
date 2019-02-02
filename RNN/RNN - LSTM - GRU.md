@@ -283,7 +283,9 @@ $$
 \quad
 \tilde{\textbf{c}}_t = \text{tanh}(\textbf{W}_c\textbf{x}_t + \textbf{U}_c  \left(\textbf{o}_{t-1} \odot \text{tanh}(\textbf{c}_{t-1})\right)  + \textbf{b}_c)
 $$
+最后是 cs224n 中提出的 RNN 训练 tips：
 
+![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/11.png)
 
 
 

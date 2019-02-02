@@ -60,13 +60,13 @@ RNN 中 Loss 的计算图示例：
 
 
 
-总的 Loss 是每个时间结点的加和 ： $\mathcal{\large{L}} (\hat{\textbf{y}}, \textbf{y}) = \sum_{t = 1}^{T} \mathcal{ \large{L} }(\hat{\textbf{y}_t}, \textbf{y}_{t})$
+总的 Loss 是每个时间结点的加和 ： $\mathcal{\large{L}} (\hat{\textbf{y}}, \textbf{y}) = \sum_{t = 1}^{T} \mathcal{ \large{L} }(\hat{\textbf{y}_t}, \textbf{y}_{t})​$
 
 
 
 **backpropagation through time (BPTT)** 算法：
 $$
-\frac{\partial \textbf{E}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \textbf{E}_{t}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \textbf{E}_t}{\partial \textbf{y}_{t}} \frac{\partial \textbf{y}_{t}}{\partial \textbf{h}_{t}} \overbrace{\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}}^{ \bigstar } \frac{\partial \textbf{h}_{k}}{\partial \textbf{W}}
+\frac{\partial \boldsymbol{\mathcal{L}}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \boldsymbol{\mathcal{L}}_{t}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \boldsymbol{\mathcal{L}}_t}{\partial \textbf{y}_{t}} \frac{\partial \textbf{y}_{t}}{\partial \textbf{h}_{t}} \overbrace{\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}}^{ \bigstar } \frac{\partial \textbf{h}_{k}}{\partial \textbf{W}}
 $$
 其中 $\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}$ 包含一系列 $\text{Jacobian}$ 矩阵，
 $$
@@ -211,9 +211,14 @@ $$
 
 ### GRU
 
-相比于 Vanilla RNN (有两个输入，$\textbf{x}_t$ 和 $\textbf{h}_{t-1}$)，从上面的 $(1) \sim (4)$ 式可以看出 一个LSTM 单元有八个输入 (如下图，不考虑 peephole) ，因而参数是 Vanilla RNN 的四倍，带来的结果是训练起来很慢，因而在2014年 Cho 等人提出了 [GRU](https://arxiv.org/pdf/1409.1259.pdf) ，对 LSTM 进行了简化。
+相比于 Vanilla RNN (每个 time step 有一个输入，$\textbf{x}_t$ )，从上面的 $(1) \sim (4)$ 式可以看出 一个LSTM 单元有四个输入 (如下图，不考虑 peephole) ，因而参数是 Vanilla RNN 的四倍，带来的结果是训练起来很慢，因而在2014年 Cho 等人提出了 [GRU](https://arxiv.org/pdf/1409.1259.pdf) ，对 LSTM 进行了简化，可加快训练速度。
+
+
 
 ![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/7.png)
+
+
+
 
 
 $$
@@ -228,7 +233,23 @@ $$
 \text{final hidden state} &: \quad \textbf{h}_t= \textbf{o}_t \odot \text{tanh}(\textbf{c}_t) \tag{6}
 \end{align}
 $$
-在式 $(5)$ 中 forget gate 和 input gate 是互补关系，因而比较冗余，GRU 将其合并为一个 update gate。同时 GRU 也不引入额外的记忆单元 (LSTM 中的 $\textbf{c}$) ，而是直接在当前状态 $\textbf{h}_t$ 和历史状态 $\textbf{h}_{t-1}$ 之间建立线性依赖关系。
+在式 $(5)​$ 中 forget gate 和 input gate 是互补关系，因而比较冗余，GRU 将其合并为一个 update gate。同时 GRU 也不引入额外的记忆单元 (LSTM 中的 $\textbf{c}​$) ，而是直接在当前状态 $\textbf{h}_t​$ 和历史状态 $\textbf{h}_{t-1}​$ 之间建立线性依赖关系。
+
+![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/8.png)
+
+
+
+$$
+\large\text{GRU} ：
+\normalsize
+\begin{align}
+\text{reset gate}&: \quad  \textbf{r}_t = \sigma(\textbf{W}_r\textbf{x}_t + \textbf{U}_r\textbf{h}_{t-1} + \textbf{b}_r)\tag{7} \\
+\text{update gate}&: \quad  \textbf{z}_t = \sigma(\textbf{W}_z\textbf{x}_t + \textbf{U}_z\textbf{h}_{t-1} + \textbf{b}_z)\tag{8} \\
+\text{new memory cell}&: \quad  \tilde{\textbf{h}}_t = \text{tanh}(\textbf{W}_h\textbf{x}_t + \textbf{r}_t \odot (\textbf{U}_h\textbf{h}_{t-1}) + \textbf{b}_h) \tag{9}\\
+\text{final hidden state}&: \quad \textbf{h}_t = \textbf{z}_t \odot \textbf{h}_{t-1} + (1 - \textbf{z}_t) \odot \tilde{\textbf{h}}_t \tag{10}
+\end{align}
+$$
+$ \tilde{\textbf{h}}_t $ 为时刻 t 的候选状态，$\textbf{r}_t$ 控制 $ \tilde{\textbf{h}}_t $ 有多少依赖于上一时刻的状态 $\textbf{h}_{t-1}$ ，如果 $\textbf{r}_t = 1$ ，则式 $(9)$ 与 Vanilla RNN 一致，对于短依赖的 GRU 单元，reset gate 通常会更新频繁。$\textbf{z}_t$ 控制当前的内部状态 $\textbf{h}_t$ 中有多少来自于上一时刻的 $\textbf{h}_{t-1}$ 。如果 $\textbf{z}_t = 1$ ，则会每步都传递同样的信息，和当前输入 $\textbf{x}_t$ 无关。 
 
 
 
@@ -238,13 +259,9 @@ $$
 
 
 
+$\tilde{\textbf{c}}_t $ 为时刻 t 的候选状态，$\textbf{i}_t$ 控制 $\tilde{\textbf{c}}_t$  中有多少信息需要保存，$\textbf{f}_{t}$ 控制上一时刻的内部状态 $\textbf{c}_{t-1}$ 需要遗忘多少信息，$\textbf{o}_t$ 控制当前时刻的内部状态 $\textbf{c}_t$ 有多少信息需要输出给外部状态 $\textbf{h}_t$ 。
 
-
-
-
-
-
-
+对比 Vanilla RNN，可以发现在时刻 t，Vanilla RNN 通过 $\textbf{h}_t$ 来保存和传递信息，上文已分析了如果时间间隔较大容易产生梯度消失的问题。 LSTM 则通过记忆单元 $\textbf{c}_t$ 来传递信息，通过 $\textbf{i}_t$ 和 $\textbf{f}_{t}$ 的调控，$\textbf{c}_t$ 可以在 t 时刻捕捉到某个关键信息，并有能力将此关键信息保存一定的时间间隔。
 
 
 

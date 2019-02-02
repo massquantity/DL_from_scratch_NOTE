@@ -89,15 +89,21 @@ $$
 $$
 连乘的次数多了之后，则若最大的特征值 $\lambda >1$ ，会产生梯度爆炸； $\lambda < 1$ ，则会产生梯度消失 。
 
+下左图显示一个 time step 中 tanh 函数的计算结果，右图显示整个神经网络的计算结果，可以清楚地看到哪个区域最容易产生梯度爆炸/消失问题。
+
+![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/9.png)
+
+
+
 
 
 #### 梯度爆炸的解决办法：
 
-(1)  Truncated Backpropagation through time：每次只 BP 固定的 time step 数，类似于 mini-batch SGD。缺点是丧失了长距离记忆的能力。
+(1)  **Truncated Backpropagation through time**：每次只 BP 固定的 time step 数，类似于 mini-batch SGD。缺点是丧失了长距离记忆的能力。
 
 ![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/3.png)
 
-(2)  Clipping Gradients： 当梯度超过一定的 threshold 后，就进行 element-wise 的裁剪，该方法的缺点是又引入了一个新的参数 threshold。该方法可被视为一种基于瞬时梯度大小来自适应 learning rate 的方法：
+(2)  **Clipping Gradients**： 当梯度超过一定的 threshold 后，就进行 element-wise 的裁剪，该方法的缺点是又引入了一个新的参数 threshold。该方法可被视为一种基于瞬时梯度大小来自适应 learning rate 的方法：
 $$
 \text{if} \quad \lVert \textbf{g} \rVert \ge \text{threshold} \\[1ex]
 \textbf{g} \leftarrow \frac{\text{threshold}}{\lVert \textbf{g} \rVert} \textbf{g}
@@ -123,7 +129,9 @@ $$
 $$
 由于 $\mathbf{v}$ 为特征向量，$\mathbf{v} \neq 0$ ，所以 $|\lambda| = 1$ ，这样连乘之后 $\lambda^t$ 不会出现越来越小的情况。
 
+(3) 反转输入序列。像在机器翻译中使用 seq2seq 模型，若使用正常序列输入，则输入序列的第一个词和输出序列的第一个词相距较远，难以学到长期依赖。将输入序列反向后，输入序列的第一个词就会和输出序列的第一个词非常接近，二者的相互关系也就比较容易学习了。这样模型可以先学前几个词的短期依赖，再学后面词的长期依赖关系。见下图正常输入顺序是 $|\text{ABC}|​$，反向是 $|\text{CBA}|​$ ：
 
+![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/10.png)
 
 
 

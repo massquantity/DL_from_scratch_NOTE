@@ -2,7 +2,13 @@
 
 
 
+循环神经网络 (Recurrent Neural Network，RNN) 是一类具有短期记忆能力的神经网络，因而常用于序列建模。本篇先总结 RNN 的基本概念，以及其训练中时常遇到梯度爆炸和梯度消失问题，再引出 RNN 的两个主流变种 —— LSTM 和 GRU。
+
+
+
 ### Vanilla RNN
+
+Vanilla RNN 的主体结构：
 
 ![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/1.png)
 
@@ -18,7 +24,7 @@ $$
 \hat{\textbf{y}}_{t} &= \textbf{softmax}\left(\textbf{W}_{yh}\textbf{h}_{t} + \textbf{b}_{y}\right) \tag{3}
 \end{align} %]]>
 $$
-其中 $\textbf{W}_{hx} \in \mathbb{R}^{h \times x}, \; \textbf{W}_{hh} \in \mathbb{R}^{h \times h},  \; \textbf{W}_{yh} \in \mathbb{R}^{y \times h}, \; \textbf{b}_{h} \in \mathbb{R}^{h}, \; \textbf{b}_{h} \in \mathbb{R}^{h}$
+其中 $\textbf{W}_{hx} \in \mathbb{R}^{h \times x}, \; \textbf{W}_{hh} \in \mathbb{R}^{h \times h},  \; \textbf{W}_{yh} \in \mathbb{R}^{y \times h}, \; \textbf{b}_{h} \in \mathbb{R}^{h}, \; \textbf{b}_{y} \in \mathbb{R}^{y}$
 
 $(2a)$ 式中的两个矩阵 $\mathbf{W}$ 可以合并：
 $$
@@ -40,11 +46,9 @@ $$
 $$
 
 
-注意到在计算时，每一步使用的参数 $\textbf{W}, \; \textbf{b}$ 都是一样的，也就是说每个步骤的参数都是共享的，这是RNN的重要特点。
+注意到在计算时，每一 time step 中使用的参数 $\textbf{W}, \; \textbf{b}$ 是一样的，也就是说每个步骤的参数都是共享的，这是RNN的重要特点。
 
-==TODO： RNN有两个输入， 李宏毅==
-
-和普通的全连接层相比，RNN 除了输入 $\textbf{x}_t$ 外，还有输入隐藏层上一节点 $\mathbf{h}_{t-1}$ ，RNN 每一层的值就是这两个输入用矩阵 $\textbf{W}_{hx}$，$\textbf{W}_{hh}$和激活函数进行组合。从 $(2a)$ 式可以看出 $\textbf{x}_t$ 和 $\mathbf{h}_{t-1}$  都是与 $\textbf{h}_h$ 全连接的，下图形象展示了各个时间节点 RNN 隐藏层记忆的变化：(https://blog.csdn.net/zzukun/article/details/49968129)，随着时间流逝，蓝色结点保留地越来越少，这意味着RNN对于长时记忆的困难。
+和普通的全连接层相比，RNN 除了输入 $\textbf{x}_t$ 外，还有输入隐藏层上一节点 $\mathbf{h}_{t-1}$ ，RNN 每一层的输出就是这两个输入用矩阵 $\textbf{W}_{hx}$，$\textbf{W}_{hh}$和激活函数进行组合的结果。从 $(2a)$ 式可以看出 $\textbf{x}_t$ 和 $\mathbf{h}_{t-1}$  都是与 $\textbf{h}_h$ 全连接的，[下图](http://iamtrask.github.io/2015/11/15/anyone-can-code-lstm/)形象展示了各个时间节点 RNN 隐藏层记忆的变化。随着时间流逝，最初的蓝色结点保留地越来越少，这意味着RNN对于长时记忆的困难。
 
 ![](/home/massquantity/Documents/DL_from_scratch_NOTE/pic/RNN/recurrence_gif.gif)
 
@@ -54,17 +58,19 @@ $$
 
 #### Vanishing & Exploding Gradient Problems
 
-RNN 中 Loss 的计算图示例：
+RNN 对于长时记忆的困难主要来源于梯度爆炸 / 消失问题，下面进行说明。RNN 中 Loss 的计算图示例：
+
+
 
 ![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/2.png)
 
 
 
-总的 Loss 是每个时间结点的加和 ： $\mathcal{\large{L}} (\hat{\textbf{y}}, \textbf{y}) = \sum_{t = 1}^{T} \mathcal{ \large{L} }(\hat{\textbf{y}_t}, \textbf{y}_{t})​$
+总的 Loss 是每个 time step 的加和 ： $\mathcal{\large{L}} (\hat{\textbf{y}}, \textbf{y}) = \sum_{t = 1}^{T} \mathcal{ \large{L} }(\hat{\textbf{y}_t}, \textbf{y}_{t})$
 
 
 
-**backpropagation through time (BPTT)** 算法：
+由 **backpropagation through time (BPTT)** 算法，参数的梯度为：
 $$
 \frac{\partial \boldsymbol{\mathcal{L}}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \boldsymbol{\mathcal{L}}_{t}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \boldsymbol{\mathcal{L}}_t}{\partial \textbf{y}_{t}} \frac{\partial \textbf{y}_{t}}{\partial \textbf{h}_{t}} \overbrace{\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}}^{ \bigstar } \frac{\partial \textbf{h}_{k}}{\partial \textbf{W}}
 $$
@@ -87,7 +93,7 @@ $$
 $$
 \mathbf{W}^t = (\mathbf{V} \, \text{diag}(\boldsymbol{\lambda}) \, \mathbf{V}^{-1})^t = \mathbf{V} \, \text{diag}(\boldsymbol{\lambda})^t \, \mathbf{V}^{-1}
 $$
-连乘的次数多了之后，则若最大的特征值 $\lambda >1$ ，会产生梯度爆炸； $\lambda < 1$ ，则会产生梯度消失 。
+连乘的次数多了之后，则若最大的特征值 $\lambda >1$ ，会产生梯度爆炸； $\lambda < 1$ ，则会产生梯度消失 。不论哪种情况，都会导致模型难以学到有用的模式。
 
 下左图显示一个 time step 中 tanh 函数的计算结果，右图显示整个神经网络的计算结果，可以清楚地看到哪个区域最容易产生梯度爆炸/消失问题。
 
@@ -103,7 +109,9 @@ $$
 
 ![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/3.png)
 
-(2)  **Clipping Gradients**： 当梯度超过一定的 threshold 后，就进行 element-wise 的裁剪，该方法的缺点是又引入了一个新的参数 threshold。该方法可被视为一种基于瞬时梯度大小来自适应 learning rate 的方法：
+
+
+(2)  **Clipping Gradients**： 当梯度超过一定的 threshold 后，就进行 element-wise 的裁剪，该方法的缺点是又引入了一个新的参数 threshold。同时该方法也可视为一种基于瞬时梯度大小来自适应 learning rate 的方法：
 $$
 \text{if} \quad \lVert \textbf{g} \rVert \ge \text{threshold} \\[1ex]
 \textbf{g} \leftarrow \frac{\text{threshold}}{\lVert \textbf{g} \rVert} \textbf{g}
@@ -116,7 +124,7 @@ $$
 
 (1)  使用 LSTM、GRU等升级版 RNN，使用各种 gates 控制信息的流通。
 
-(2)  [将权重矩阵 $\textbf{W}$ 初始化为正交矩阵](https://arxiv.org/pdf/1602.06662.pdf)。正交矩阵有如下性质：$A^T A =A A^T =  I, \; A^T = A^{-1}$， 正交矩阵的特征值的绝对值为 $\text{1}$ 。证明：  对矩阵 $A$ 有，
+(2)  在这篇论文 (https://arxiv.org/pdf/1602.06662.pdf) 中提出将权重矩阵 $\textbf{W}$ 初始化为正交矩阵。正交矩阵有如下性质：$A^T A =A A^T =  I, \; A^T = A^{-1}$， 正交矩阵的特征值的绝对值为 $\text{1}$ 。证明如下，  对矩阵 $A$ 有：
 $$
 \begin{align*}
 & A \mathbf{v} = \lambda \mathbf{v} \\[1ex]
@@ -129,27 +137,19 @@ $$
 $$
 由于 $\mathbf{v}$ 为特征向量，$\mathbf{v} \neq 0$ ，所以 $|\lambda| = 1$ ，这样连乘之后 $\lambda^t$ 不会出现越来越小的情况。
 
-(3) 反转输入序列。像在机器翻译中使用 seq2seq 模型，若使用正常序列输入，则输入序列的第一个词和输出序列的第一个词相距较远，难以学到长期依赖。将输入序列反向后，输入序列的第一个词就会和输出序列的第一个词非常接近，二者的相互关系也就比较容易学习了。这样模型可以先学前几个词的短期依赖，再学后面词的长期依赖关系。见下图正常输入顺序是 $|\text{ABC}|​$，反向是 $|\text{CBA}|​$ ：
+(3) 反转输入序列。像在机器翻译中使用 seq2seq 模型，若使用正常序列输入，则输入序列的第一个词和输出序列的第一个词相距较远，难以学到长期依赖。将输入序列反向后，输入序列的第一个词就会和输出序列的第一个词非常接近，二者的相互关系也就比较容易学习了。这样模型可以先学前几个词的短期依赖，再学后面词的长期依赖关系。见下图正常输入顺序是 $|\text{ABC}|$，反向是 $|\text{CBA}|$ ，则 $\text{A}$ 与第一个输出词 $\text{W}$ 接近：
 
 ![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/10.png)
 
 
 
+
+
+
+
 ### LSTM
 
-> 1、原始的 LSTM 是没有 forget gate 的，或者说相当于 forget gate 恒为 1，所有不存在梯度消失问题；
->
-> 2、现在的 LSTM 被引入了 forget gate，但是 LSTM 的一个初始化技巧就是将 forget gate 的 bias 置为正数（例如 1 或者 5，这点可以查看各大框架源码），这样一来模型刚开始训练时 forget gate 的值都接近 1，不会发生梯度消失；
->
-> 3、随着训练过程的进行，forget gate 就不再恒为 1 了。不过，一个训好的模型里各个 gate 值往往不是在 [0, 1] 这个区间里，而是要么 0 要么 1，很少有类似 0.5 这样的中间值，其实相当于一个二元的开关。假如在某个序列里，forget gate 全是 1，那么梯度不会消失；否则，若某一个 forget gate 是 0，这时候虽然会导致梯度消失，但这是 feature 不是 bug，体现了模型的选择性（有些任务里是需要选择性的，比如情感分析里”这部电影很好看，但是票价有点儿贵“，读到”但是“的时候就应该忘掉前半句的内容，模型不想让梯度流回去）；
->
-> 4、基于第 3 点，我不喜欢从梯度消失/爆炸的角度来谈论 LSTM/GRU 等现代门控 RNN 单元，更喜欢从选择性的角度来解释，模型选择记住（或遗忘）它想要记住（或遗忘）的部分，从而更有效地利用其隐层单元。
->
-> https://www.zhihu.com/question/34878706
-
-
-
-虽然 Vanilla RNN 理论上可以建立长时间间隔的状态之间的依赖关系，但由于梯度爆炸或消失问题，实际上只能学到短期依赖关系。为了学到长期依赖关系，LSTM 中引入了门控机制来控制信息的累计速度，包括有选择地加入新的信息，并有选择地遗忘之前累计的信息，整个 LSTM 单元结构如下图所示：
+虽然 Vanilla RNN 理论上可以建立长时间间隔状态之间的依赖关系，但由于梯度爆炸或消失问题，实际上只能学到短期依赖关系。为了学到长期依赖关系，LSTM 中引入了门控机制来控制信息的累计速度，包括有选择地加入新的信息，并有选择地遗忘之前累计的信息，整个 LSTM 单元结构如下图所示：
 
 ![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/5.png)
 
@@ -165,7 +165,7 @@ $$
 \text{final hidden state} &: \quad \textbf{h}_t= \textbf{o}_t \odot \text{tanh}(\textbf{c}_t) \tag{6}
 \end{align}
 $$
-公式 $(1) \sim (4) $ 的输入都一样，因而可以合并：
+式 $(1) \sim (4) $ 的输入都一样，因而可以合并：
 $$
 \begin{pmatrix}
 \textbf{i}_t \\
@@ -188,7 +188,18 @@ $$
 \end{bmatrix} + \textbf{b}
 \right)
 $$
-$\tilde{\textbf{c}}_t $ 为时刻 t 的候选状态，$\textbf{i}_t$ 控制 $\tilde{\textbf{c}}_t$  中有多少信息需要保存，$\textbf{f}_{t}$ 控制上一时刻的内部状态 $\textbf{c}_{t-1}$ 需要遗忘多少信息，$\textbf{o}_t$ 控制当前时刻的内部状态 $\textbf{c}_t$ 有多少信息需要输出给外部状态 $\textbf{h}_t$ 。
+$\tilde{\textbf{c}}_t $ 为时刻 t 的候选状态，$\textbf{i}_t$ 控制 $\tilde{\textbf{c}}_t$  中有多少新信息需要保存，$\textbf{f}_{t}$ 控制上一时刻的内部状态 $\textbf{c}_{t-1}$ 需要遗忘多少信息，$\textbf{o}_t$ 控制当前时刻的内部状态 $\textbf{c}_t$ 有多少信息需要输出给外部状态 $\textbf{h}_t$ 。
+
+下表显示 forget gate 和 input gate 的关系，可以看出 forget gate 其实更应该被称为 “remember gate”， 因为其开启时之前的记忆信息 $\textbf{c}_{t-1}$ 才会被保留，关闭时则会遗忘所有：
+
+| forget gate | input gate |                            result                            |
+| :---------: | :--------: | :----------------------------------------------------------: |
+|      1      |     0      |            保留上一时刻的状态 $\textbf{c}_{t-1}$             |
+|      1      |     1      | 保留上一时刻 $\textbf{c}_{t-1}$ 和添加新信息 $\tilde{\textbf{c}}_t$ |
+|      0      |     1      |       清空历史信息，引入新信息 $\tilde{\textbf{c}}_t$        |
+|      0      |     0      |                       清空所有新旧信息                       |
+
+
 
 对比 Vanilla RNN，可以发现在时刻 t，Vanilla RNN 通过 $\textbf{h}_t$ 来保存和传递信息，上文已分析了如果时间间隔较大容易产生梯度消失的问题。 LSTM 则通过记忆单元 $\textbf{c}_t$ 来传递信息，通过 $\textbf{i}_t$ 和 $\textbf{f}_{t}$ 的调控，$\textbf{c}_t$ 可以在 t 时刻捕捉到某个关键信息，并有能力将此关键信息保存一定的时间间隔。
 
@@ -196,7 +207,7 @@ $\tilde{\textbf{c}}_t $ 为时刻 t 的候选状态，$\textbf{i}_t$ 控制 $\ti
 $$
 \textbf{c}_t =   \textbf{c}_{t-1} + \textbf{i}_t \odot \tilde{\textbf{c}}_t
 $$
-这样 $\frac{\partial \textbf{c}_t}{\partial \textbf{c}_{t-1}}$ 恒为 $\text{1}$ 。但是这样 $\textbf{c}_t$ 会不断增大，容易饱和从而降低模型性能。后来引入了 forget gate ，则梯度变为 $\textbf{f}_{t}$ ，事实上连乘多个 $\textbf{f}_{t} \in (0,1)$ 同样会导致梯度消失，但是 LSTM 的一个初始化技巧就是将 forget gate 的 bias 置为正数（例如 1 或者 5，这点可以查看各大框架源码），这样一来模型刚开始训练时 forget gate 的值都接近 1，不会发生梯度消失 (反之若 forget gate 的初始值过小则意味着前一时刻的大部分信息都丢失了，这样很难捕捉到长距离依赖关系)。 随着训练过程的进行，forget gate 就不再恒为 1 了。不过，一个训好的模型里各个 gate 值往往不是在 [0, 1] 这个区间里，而是要么 0 要么 1，很少有类似 0.5 这样的中间值，其实相当于一个二元的开关。假如在某个序列里，forget gate 全是 1，那么梯度不会消失；某一个 forget gate 是 0，模型选择遗忘上一时刻的信息。
+这样 $\frac{\partial \textbf{c}_t}{\partial \textbf{c}_{t-1}}$ 恒为 $\text{1}$ 。但是这样 $\textbf{c}_t$ 会不断增大，容易饱和从而降低模型性能。后来引入了 forget gate ，则梯度变为 $\textbf{f}_{t}$ ，事实上连乘多个 $\textbf{f}_{t} \in (0,1)$ 同样会导致梯度消失，但是 LSTM 的一个初始化技巧就是将 forget gate 的 bias 置为正数（例如 1 或者 5，如 tensorflow 中的默认值就是 $1.0$ ），这样一来模型刚开始训练时 forget gate 的值都接近 1，不会发生梯度消失 (反之若 forget gate 的初始值过小则意味着前一时刻的大部分信息都丢失了，这样很难捕捉到长距离依赖关系)。 随着训练过程的进行，forget gate 就不再恒为 1 了。不过，一个训好的模型里各个 gate 值往往不是在 [0, 1] 这个区间里，而是要么 0 要么 1，很少有类似 0.5 这样的中间值，其实相当于一个二元的开关。假如在某个序列里，forget gate 全是 1，那么梯度不会消失；某一个 forget gate 是 0，模型选择遗忘上一时刻的信息。
 
 
 
@@ -209,7 +220,7 @@ $$
 \end{align*}
 $$
 
-注意 input gate 和 forget gate 连接的是 $\textbf{c}_{t-1}$ ，而 output gate 连接的是 $\textbf{c}_t$ 。
+注意 input gate 和 forget gate 连接的是 $\textbf{c}_{t-1}$ ，而 output gate 连接的是 $\textbf{c}_t$ 。下图来自 [《LSTM: A Search Space Odyssey》](https://arxiv.org/pdf/1503.04069.pdf)，标注了 peephole 连接的样貌。
 
 ![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/6.png)
 
@@ -219,7 +230,7 @@ $$
 
 ### GRU
 
-相比于 Vanilla RNN (每个 time step 有一个输入，$\textbf{x}_t$ )，从上面的 $(1) \sim (4)$ 式可以看出 一个LSTM 单元有四个输入 (如下图，不考虑 peephole) ，因而参数是 Vanilla RNN 的四倍，带来的结果是训练起来很慢，因而在2014年 Cho 等人提出了 [GRU](https://arxiv.org/pdf/1409.1259.pdf) ，对 LSTM 进行了简化，可加快训练速度。
+相比于 Vanilla RNN (每个 time step 有一个输入 $\textbf{x}_t$ )，从上面的 $(1) \sim (4)$ 式可以看出 一个 LSTM 单元有四个输入 (如下图，不考虑 peephole) ，因而参数是 Vanilla RNN 的四倍，带来的结果是训练起来很慢，因而在2014年 Cho 等人提出了 [GRU](https://arxiv.org/pdf/1409.1259.pdf) ，对 LSTM 进行了简化，在不影响效果的前提下加快了训练速度。
 
 
 
@@ -259,6 +270,19 @@ $$
 $$
 $ \tilde{\textbf{h}}_t $ 为时刻 t 的候选状态，$\textbf{r}_t$ 控制 $ \tilde{\textbf{h}}_t $ 有多少依赖于上一时刻的状态 $\textbf{h}_{t-1}$ ，如果 $\textbf{r}_t = 1$ ，则式 $(9)$ 与 Vanilla RNN 一致，对于短依赖的 GRU 单元，reset gate 通常会更新频繁。$\textbf{z}_t$ 控制当前的内部状态 $\textbf{h}_t$ 中有多少来自于上一时刻的 $\textbf{h}_{t-1}$ 。如果 $\textbf{z}_t = 1$ ，则会每步都传递同样的信息，和当前输入 $\textbf{x}_t$ 无关。 
 
+另一方面看，$\textbf{r}_t$ 与 LSTM 中的 $\textbf{o}_t$ 角色类似，因为将上面的 $(6)$ 式代入 $(4)$ 式可以得到：
+
+
+$$
+\begin{align*} 
+\tilde{\textbf{c}}_t &= \text{tanh}(\textbf{W}_c\textbf{x}_t + \textbf{U}_c\textbf{h}_{t-1} + \textbf{b}_c) \\ 
+\textbf{h}_t &= \textbf{o}_t \odot \text{tanh}(\textbf{c}_t) 
+\end{align*}
+\quad
+\Longrightarrow
+\quad
+\tilde{\textbf{c}}_t = \text{tanh}(\textbf{W}_c\textbf{x}_t + \textbf{U}_c  \left(\textbf{o}_{t-1} \odot \text{tanh}(\textbf{c}_{t-1})\right)  + \textbf{b}_c)
+$$
 
 
 
@@ -267,9 +291,17 @@ $ \tilde{\textbf{h}}_t $ 为时刻 t 的候选状态，$\textbf{r}_t$ 控制 $ \
 
 
 
-$\tilde{\textbf{c}}_t $ 为时刻 t 的候选状态，$\textbf{i}_t$ 控制 $\tilde{\textbf{c}}_t$  中有多少信息需要保存，$\textbf{f}_{t}$ 控制上一时刻的内部状态 $\textbf{c}_{t-1}$ 需要遗忘多少信息，$\textbf{o}_t$ 控制当前时刻的内部状态 $\textbf{c}_t$ 有多少信息需要输出给外部状态 $\textbf{h}_t$ 。
+> 1、原始的 LSTM 是没有 forget gate 的，或者说相当于 forget gate 恒为 1，所有不存在梯度消失问题；
+>
+> 2、现在的 LSTM 被引入了 forget gate，但是 LSTM 的一个初始化技巧就是将 forget gate 的 bias 置为正数（例如 1 或者 5，这点可以查看各大框架源码），这样一来模型刚开始训练时 forget gate 的值都接近 1，不会发生梯度消失；
+>
+> 3、随着训练过程的进行，forget gate 就不再恒为 1 了。不过，一个训好的模型里各个 gate 值往往不是在 [0, 1] 这个区间里，而是要么 0 要么 1，很少有类似 0.5 这样的中间值，其实相当于一个二元的开关。假如在某个序列里，forget gate 全是 1，那么梯度不会消失；否则，若某一个 forget gate 是 0，这时候虽然会导致梯度消失，但这是 feature 不是 bug，体现了模型的选择性（有些任务里是需要选择性的，比如情感分析里”这部电影很好看，但是票价有点儿贵“，读到”但是“的时候就应该忘掉前半句的内容，模型不想让梯度流回去）；
+>
+> 4、基于第 3 点，我不喜欢从梯度消失/爆炸的角度来谈论 LSTM/GRU 等现代门控 RNN 单元，更喜欢从选择性的角度来解释，模型选择记住（或遗忘）它想要记住（或遗忘）的部分，从而更有效地利用其隐层单元。
+>
+> https://www.zhihu.com/question/34878706
 
-对比 Vanilla RNN，可以发现在时刻 t，Vanilla RNN 通过 $\textbf{h}_t$ 来保存和传递信息，上文已分析了如果时间间隔较大容易产生梯度消失的问题。 LSTM 则通过记忆单元 $\textbf{c}_t$ 来传递信息，通过 $\textbf{i}_t$ 和 $\textbf{f}_{t}$ 的调控，$\textbf{c}_t$ 可以在 t 时刻捕捉到某个关键信息，并有能力将此关键信息保存一定的时间间隔。
+
 
 
 

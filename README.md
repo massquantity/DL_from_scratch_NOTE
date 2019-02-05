@@ -1,8 +1,6 @@
-## DL_from_scratch_NOTE
+## A Series of DEEP LEARNING Notes:
 
-a series of DEEP LEARNING note:
-
-1. [neural network basic concepts](https://nbviewer.jupyter.org/github/massquantity/DL_from_scratch_NOTE/blob/master/Note_1%20basics.ipynb)
+1. [Neural network basic concepts](https://nbviewer.jupyter.org/github/massquantity/DL_from_scratch_NOTE/blob/master/Note_1%20basics.ipynb)
 2. [Backpropagation](https://www.cnblogs.com/massquantity/p/10138489.html)
 3. [Training tricks of neural network](https://nbviewer.jupyter.org/github/massquantity/DL_from_scratch_NOTE/blob/master/Note_2%20training%20of%20NN.ipynb)
 4. Convolutional Neural Network

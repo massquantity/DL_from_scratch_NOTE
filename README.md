@@ -1,4 +1,4 @@
-## A Series of DEEP LEARNING Notes:
+## A Series of Notes on DEEP LEARNING:
 
 1. [Neural network basic concepts](https://nbviewer.jupyter.org/github/massquantity/DL_from_scratch_NOTE/blob/master/Note_1%20basics.ipynb)
 2. [Backpropagation](https://www.cnblogs.com/massquantity/p/10138489.html)

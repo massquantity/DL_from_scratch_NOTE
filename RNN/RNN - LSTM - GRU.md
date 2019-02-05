@@ -241,7 +241,7 @@ $$
 
 
 $$
-\large\text{LSTM} ：
+\large\text{LSTM :} 
 \normalsize
 \begin{align}
 \text{input gate}&: \quad  \textbf{i}_t = \sigma(\textbf{W}_i\textbf{x}_t + \textbf{U}_i\textbf{h}_{t-1} + \textbf{b}_i)\tag{1} \\
@@ -252,7 +252,17 @@ $$
 \text{final hidden state} &: \quad \textbf{h}_t= \textbf{o}_t \odot \text{tanh}(\textbf{c}_t) \tag{6}
 \end{align}
 $$
-在式 $(5)​$ 中 forget gate 和 input gate 是互补关系，因而比较冗余，GRU 将其合并为一个 update gate。同时 GRU 也不引入额外的记忆单元 (LSTM 中的 $\textbf{c}​$) ，而是直接在当前状态 $\textbf{h}_t​$ 和历史状态 $\textbf{h}_{t-1}​$ 之间建立线性依赖关系。
+
+
+
+
+
+
+
+
+
+
+在式 $(5)$ 中 forget gate 和 input gate 是互补关系，因而比较冗余，GRU 将其合并为一个 update gate。同时 GRU 也不引入额外的记忆单元 (LSTM 中的 $\textbf{c}$) ，而是直接在当前状态 $\textbf{h}_t$ 和历史状态 $\textbf{h}_{t-1}$ 之间建立线性依赖关系。
 
 ![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/8.png)
 
@@ -283,9 +293,15 @@ $$
 \quad
 \tilde{\textbf{c}}_t = \text{tanh}(\textbf{W}_c\textbf{x}_t + \textbf{U}_c  \left(\textbf{o}_{t-1} \odot \text{tanh}(\textbf{c}_{t-1})\right)  + \textbf{b}_c)
 $$
+
+
 最后是 cs224n 中提出的 RNN 训练 tips：
 
 ![](https://raw.githubusercontent.com/massquantity/DL_from_scratch_NOTE/master/pic/RNN/11.png)
+
+
+
+
 
 
 
@@ -302,41 +318,6 @@ $$
 > 4、基于第 3 点，我不喜欢从梯度消失/爆炸的角度来谈论 LSTM/GRU 等现代门控 RNN 单元，更喜欢从选择性的角度来解释，模型选择记住（或遗忘）它想要记住（或遗忘）的部分，从而更有效地利用其隐层单元。
 >
 > https://www.zhihu.com/question/34878706
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
